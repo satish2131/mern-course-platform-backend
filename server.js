@@ -1,7 +1,8 @@
+// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const path = require("path"); // ✅ add this
+const path = require("path"); // ✅ important for serving frontend
 require("dotenv").config();
 
 const app = express();
@@ -10,30 +11,29 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// API Routes
+// Routes
 app.use("/api/courses", require("./routes/courses"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/certificates", require("./routes/certificates"));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("MongoDB connected"))
-.catch(err => console.log(err));
-
-// Serve frontend in production
+// Serve frontend (optional, if you place frontend/build inside backend)
 if (process.env.NODE_ENV === "production") {
-  // Make sure your frontend build is inside backend folder: /frontend/build
   app.use(express.static(path.join(__dirname, "frontend", "build")));
 
-  // Serve index.html for all unknown routes (React routing)
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "frontend", "build", "index.html"));
-  });
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "build", "index.html"));
+});
 }
 
-// Server listen
+// Connect MongoDB
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.log("MongoDB connection error:", err));
+
+// Port
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
